@@ -1,114 +1,272 @@
-<p align="center">
-  <a href="https://librechat.ai">
-    <img src="docs/assets/LibreChat.svg" height="256">
-  </a>
-  <h1 align="center">
-    <a href="https://librechat.ai">LibreChat</a>
-  </h1>
-</p>
+# You will need a public mongo db instance which you can get for free
 
-<p align="center">
-  <a href="https://discord.librechat.ai"> 
-    <img
-      src="https://img.shields.io/discord/1086345563026489514?label=&logo=discord&style=for-the-badge&logoWidth=20&logoColor=white&labelColor=000000&color=blueviolet">
-  </a>
-  <a href="https://www.youtube.com/@LibreChat"> 
-    <img
-      src="https://img.shields.io/badge/YOUTUBE-red.svg?style=for-the-badge&logo=youtube&logoColor=white&labelColor=000000&logoWidth=20">
-  </a>
-  <a href="https://docs.librechat.ai"> 
-    <img
-      src="https://img.shields.io/badge/DOCS-blue.svg?style=for-the-badge&logo=read-the-docs&logoColor=white&labelColor=000000&logoWidth=20">
-  </a>
-  <a aria-label="Sponsors" href="https://github.com/sponsors/danny-avila">
-    <img
-      src="https://img.shields.io/badge/SPONSORS-brightgreen.svg?style=for-the-badge&logo=github-sponsors&logoColor=white&labelColor=000000&logoWidth=20">
-  </a>
-</p>
+- https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/
 
-<p align="center">
-<a href="https://railway.app/template/b5k2mn?referralCode=HI9hWz">
-  <img src="https://railway.app/button.svg" alt="Deploy on Railway" height="30">
-</a>
-<a href="https://zeabur.com/templates/0X2ZY8">
-  <img src="https://zeabur.com/button.svg" alt="Deploy on Zeabur" height="30"/>
-</a>
-<a href="https://template.cloud.sealos.io/deploy?templateName=librechat">
-  <img src="https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg" alt="Deploy on Sealos" height="30">
-</a>
-</p>
+# You will need to make sure there is a folder called uploads so you can upload images
 
-# 📃 Features
+- just create a folder called uploads
 
-- 🖥️ UI matching ChatGPT, including Dark mode, Streaming, and latest updates
-- 💬 Multimodal Chat:
-  - Upload and analyze images with GPT-4 and Gemini Vision 📸
-  - General file support now available through the Assistants API integration. 🗃️
-  - Local RAG in Active Development 🚧
-- 🌎 Multilingual UI:
-  - English, 中文, Deutsch, Español, Français, Italiano, Polski, Português Brasileiro,
-  - Русский, 日本語, Svenska, 한국어, Tiếng Việt, 繁體中文, العربية, Türkçe, Nederlands, עברית
-- 🤖 AI model selection: OpenAI, Azure OpenAI, BingAI, ChatGPT, Google Vertex AI, Anthropic (Claude), Plugins, Assistants API (including Azure Assistants)
-- 💾 Create, Save, & Share Custom Presets
-- 🔄 Edit, Resubmit, and Continue messages with conversation branching
-- 📤 Export conversations as screenshots, markdown, text, json.
-- 🔍 Search all messages/conversations
-- 🔌 Plugins, including web access, image generation with DALL-E-3 and more
-- 👥 Multi-User, Secure Authentication with Moderation and Token spend tools
-- ⚙️ Configure Proxy, Reverse Proxy, Docker, many Deployment options, and completely Open-Source
+# You will need to add an .env file with your credentials
 
-[For a thorough review of our features, see our docs here](https://docs.librechat.ai/features/plugins/introduction.html) 📚
+- Create .env file
+- Pase the following
+- Replace OPEN_AI_KEY with your Open Ai Key
+- Replace MONGO_DB_URL with your mongo database url
 
-## 🪶 All-In-One AI Conversations with LibreChat
 
-LibreChat brings together the future of assistant AIs with the revolutionary technology of OpenAI's ChatGPT. Celebrating the original styling, LibreChat gives you the ability to integrate multiple AI models. It also integrates and enhances original client features such as conversation and message search, prompt templates and plugins.
+```
+#=====================================================================#
+#                       LibreChat Configuration                       #
+#=====================================================================#
+# Please refer to the reference documentation for assistance          #
+# with configuring your LibreChat environment. The guide is           #
+# available both online and within your local LibreChat               #
+# directory:                                                          #
+# Online: https://docs.librechat.ai/install/configuration/dotenv.html #
+# Locally: ./docs/install/configuration/dotenv.md                     #
+#=====================================================================#
 
-With LibreChat, you no longer need to opt for ChatGPT Plus and can instead use free or pay-per-call APIs. We welcome contributions, cloning, and forking to enhance the capabilities of this advanced chatbot platform.
+#==================================================#
+#               Server Configuration               #
+#==================================================#
 
-<!-- https://github.com/danny-avila/LibreChat/assets/110412045/c1eb0c0f-41f6-4335-b982-84b278b53d59 -->
+HOST=localhost
+PORT=8795
 
-[![Watch the video](https://img.youtube.com/vi/pNIOs1ovsXw/maxresdefault.jpg)](https://youtu.be/pNIOs1ovsXw)
-Click on the thumbnail to open the video☝️
+MONGO_URI=MONGO_DB_URL
 
----
+DOMAIN_CLIENT=http://localhost:3080
+DOMAIN_SERVER=http://localhost:3080
 
-## 📚 Documentation
+NO_INDEX=true
 
-For more information on how to use our advanced features, install and configure our software, and access our guidelines and tutorials, please check out our documentation at [docs.librechat.ai](https://docs.librechat.ai)
+#===============#
+# Debug Logging #
+#===============#
 
----
+DEBUG_LOGGING=true
+DEBUG_CONSOLE=false
 
-## 📝 Changelog
+#=============#
+# Permissions #
+#=============#
 
-Keep up with the latest updates by visiting the releases page - [Releases](https://github.com/danny-avila/LibreChat/releases)
+UID=1000
+GID=1000
 
-**⚠️ [Breaking Changes](docs/general_info/breaking_changes.md)**
-Please consult the breaking changes before updating.
+#===============#
+# Configuration #
+#===============#
+# Use an absolute path, a relative path, or a URL
 
----
+CONFIG_PATH="/alternative/path/to/librechat.yaml"
 
-## ⭐ Star History
+#===================================================#
+#                     Endpoints                     #
+#===================================================#
 
-<p align="center">
-<a href="https://trendshift.io/repositories/4685" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4685" alt="danny-avila%2FLibreChat | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
+ENDPOINTS=openAI
 
-<a href="https://star-history.com/#danny-avila/LibreChat&Date">
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=danny-avila/LibreChat&type=Date&theme=dark" onerror="this.src='https://api.star-history.com/svg?repos=danny-avila/LibreChat&type=Date'" />
-</a>
+PROXY=
 
----
+#===================================#
+# Known Endpoints - librechat.yaml  #
+#===================================#
+# https://docs.librechat.ai/install/configuration/ai_endpoints.html
 
-## ✨ Contributions
+# GROQ_API_KEY=
+# MISTRAL_API_KEY=
+# OPENROUTER_KEY=
+# ANYSCALE_API_KEY=
+# FIREWORKS_API_KEY=
+# PERPLEXITY_API_KEY=
+# TOGETHERAI_API_KEY=
 
-Contributions, suggestions, bug reports and fixes are welcome!
+#============#
+# OpenAI     #
+#============#
 
-For new features, components, or extensions, please open an issue and discuss before sending a PR.
+OPENAI_API_KEY=OPEN_AI_KEY
+OPENAI_MODELS=gpt-4,gpt-4-0613,gpt-4-vision-preview,gpt-4-0125-preview,gpt-4-turbo-preview,gpt-4-1106-preview,gpt-4-turbo-2024-04-09,gpt-4o
 
----
+DEBUG_OPENAI=false
 
-## 💖 This project exists in its current state thanks to all the people who contribute
+# TITLE_CONVO=false
+# OPENAI_TITLE_MODEL=gpt-3.5-turbo
 
-<a href="https://github.com/danny-avila/LibreChat/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=danny-avila/LibreChat" />
-</a>
+# OPENAI_SUMMARIZE=true
+# OPENAI_SUMMARY_MODEL=gpt-3.5-turbo
+
+# OPENAI_FORCE_PROMPT=true
+
+# OPENAI_REVERSE_PROXY=
+
+# OPENAI_ORGANIZATION= 
+
+#====================#
+#   Assistants API   #
+#====================#
+
+ASSISTANTS_API_KEY=OPEN_AI_KEY
+# ASSISTANTS_BASE_URL=
+ASSISTANTS_MODELS=gpt-4,gpt-4-0314,gpt-4-32k-0314,gpt-4-0613,gpt-4-0125-preview,gpt-4-turbo-preview,gpt-4-1106-preview,gpt-4-turbo-2024-04-09,gpt-4o
+
+#============#
+# Plugins    #
+#============#
+
+PLUGIN_MODELS=gpt-4,gpt-4-turbo-preview,gpt-4-0125-preview,gpt-4-1106-preview,gpt-4-0613,gpt-4o
+
+DEBUG_PLUGINS=true
+
+CREDS_KEY=f34be427ebb29de8d88c107a71546019685ed8b241d8f2ed00c3df97ad2566f0
+CREDS_IV=e2341419ec3dd3d19b13a1a87fafcbfb
+
+#==================================================#
+#                      Search                      #
+#==================================================#
+
+SEARCH=false
+
+#===================================================#
+#                    User System                    #
+#===================================================#
+
+#========================#
+# Moderation             #
+#========================#
+
+OPENAI_MODERATION=false
+OPENAI_MODERATION_API_KEY=
+# OPENAI_MODERATION_REVERSE_PROXY=
+
+BAN_VIOLATIONS=false
+BAN_DURATION=1000 * 60 * 60 * 2
+BAN_INTERVAL=20
+
+LOGIN_VIOLATION_SCORE=1
+REGISTRATION_VIOLATION_SCORE=1
+CONCURRENT_VIOLATION_SCORE=1
+MESSAGE_VIOLATION_SCORE=1
+NON_BROWSER_VIOLATION_SCORE=20
+
+LOGIN_MAX=7
+LOGIN_WINDOW=5
+REGISTER_MAX=5
+REGISTER_WINDOW=60
+
+LIMIT_CONCURRENT_MESSAGES=true
+CONCURRENT_MESSAGE_MAX=2
+
+LIMIT_MESSAGE_IP=true
+MESSAGE_IP_MAX=40
+MESSAGE_IP_WINDOW=1
+
+LIMIT_MESSAGE_USER=false
+MESSAGE_USER_MAX=40
+MESSAGE_USER_WINDOW=1
+
+ILLEGAL_MODEL_REQ_SCORE=5
+
+#========================#
+# Balance                #
+#========================#
+
+CHECK_BALANCE=false
+
+#========================#
+# Registration and Login #
+#========================#
+
+ALLOW_EMAIL_LOGIN=true
+ALLOW_REGISTRATION=true
+ALLOW_SOCIAL_LOGIN=false
+ALLOW_SOCIAL_REGISTRATION=false
+
+SESSION_EXPIRY=1000 * 60 * 15
+REFRESH_TOKEN_EXPIRY=(1000 * 60 * 60 * 24) * 7
+
+JWT_SECRET=16f8c0ef4a5d391b26034086c628469d3f9f497f08163ab9b40137092f2909ef
+JWT_REFRESH_SECRET=eaa5191f2914e30b9387fd84e254e4ba6fc51b4654968a9b0803b456a54b8418
+
+# Discord
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_CALLBACK_URL=/oauth/discord/callback
+
+# Facebook
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=
+FACEBOOK_CALLBACK_URL=/oauth/facebook/callback
+
+# GitHub
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_CALLBACK_URL=/oauth/github/callback
+
+# Google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=/oauth/google/callback
+
+# OpenID
+OPENID_CLIENT_ID=
+OPENID_CLIENT_SECRET=
+OPENID_ISSUER=
+OPENID_SESSION_SECRET=
+OPENID_SCOPE="openid profile email"
+OPENID_CALLBACK_URL=/oauth/openid/callback
+
+OPENID_BUTTON_LABEL=
+OPENID_IMAGE_URL=
+
+#========================#
+# Email Password Reset   #
+#========================#
+
+EMAIL_SERVICE=                  
+EMAIL_HOST=                     
+EMAIL_PORT=25                   
+EMAIL_ENCRYPTION=               
+EMAIL_ENCRYPTION_HOSTNAME=      
+EMAIL_ALLOW_SELFSIGNED=         
+EMAIL_USERNAME=                 
+EMAIL_PASSWORD=                 
+EMAIL_FROM_NAME=                
+EMAIL_FROM=noreply@librechat.ai
+
+#========================#
+# Firebase CDN           #
+#========================#
+
+FIREBASE_API_KEY=
+FIREBASE_AUTH_DOMAIN=
+FIREBASE_PROJECT_ID=
+FIREBASE_STORAGE_BUCKET=
+FIREBASE_MESSAGING_SENDER_ID=
+FIREBASE_APP_ID=
+
+#===================================================#
+#                        UI                         #
+#===================================================#
+
+APP_TITLE=LibreChat
+# CUSTOM_FOOTER="My custom footer"
+HELP_AND_FAQ_URL=https://librechat.ai
+
+# SHOW_BIRTHDAY_ICON=true
+
+#==================================================#
+#                      Others                      #
+#==================================================#
+#   You should leave the following commented out   #
+
+# NODE_ENV=
+
+# REDIS_URI=
+# USE_REDIS=
+
+# E2E_USER_EMAIL=
+# E2E_USER_PASSWORD=
+
+```
