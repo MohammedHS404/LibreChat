@@ -1,3 +1,7 @@
+# To Run
+
+- docker compose up
+
 # You will need a public mongo db instance which you can get for free
 
 - https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/
