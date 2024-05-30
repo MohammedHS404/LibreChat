@@ -1,15 +1,17 @@
 const { CacheKeys, RunStatus, isUUID } = require('librechat-data-provider');
 const { initializeClient } = require('~/server/services/Endpoints/assistants');
 const { checkMessageGaps, recordUsage } = require('~/server/services/Threads');
+const { deleteMessages } = require('~/models/Message');
 const { getConvo } = require('~/models/Conversation');
 const getLogStores = require('~/cache/getLogStores');
 const { sendMessage } = require('~/server/utils');
-// const spendTokens = require('~/models/spendTokens');
 const { logger } = require('~/config');
+
+const three_minutes = 1000 * 60 * 3;
 
 async function abortRun(req, res) {
   res.setHeader('Content-Type', 'application/json');
-  const { abortKey } = req.body;
+  const { abortKey, endpoint } = req.body;
   const [conversationId, latestMessageId] = abortKey.split(':');
   const conversation = await getConvo(req.user.id, conversationId);
 
@@ -40,7 +42,7 @@ async function abortRun(req, res) {
   const { openai } = await initializeClient({ req, res });
 
   try {
-    await cache.set(cacheKey, 'cancelled');
+    await cache.set(cacheKey, 'cancelled', three_minutes);
     const cancelledRun = await openai.beta.threads.runs.cancel(thread_id, run_id);
     logger.debug('[abortRun] Cancelled run:', cancelledRun);
   } catch (error) {
@@ -65,16 +67,22 @@ async function abortRun(req, res) {
     logger.error('[abortRun] Error fetching or processing run', error);
   }
 
+  /* TODO: a reconciling strategy between the existing intermediate message would be more optimal than deleting it */
+  await deleteMessages({
+    user: req.user.id,
+    unfinished: true,
+    conversationId,
+  });
   runMessages = await checkMessageGaps({
     openai,
-    latestMessageId,
-    thread_id,
     run_id,
+    endpoint,
+    thread_id,
     conversationId,
+    latestMessageId,
   });
 
   const finalEvent = {
-    title: 'New Chat',
     final: true,
     conversation,
     runMessages,

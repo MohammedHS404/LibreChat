@@ -16,7 +16,9 @@ services:
     environment:
       - HOST=0.0.0.0
     volumes:
-      - ./.env:/app/.env
+      - type: bind
+        source: ./.env
+        target: /app/.env
       - ./images:/app/client/public/images
       - ./logs:/app/api/logs
       - ./uploads:/app/uploads

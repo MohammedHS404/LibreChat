@@ -1,22 +1,23 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm, FormProvider, Controller, useWatch } from 'react-hook-form';
-import { useGetModelsQuery, useGetEndpointsQuery } from 'librechat-data-provider/react-query';
+import { useGetModelsQuery } from 'librechat-data-provider/react-query';
 import {
   Tools,
   QueryKeys,
   Capabilities,
-  EModelEndpoint,
   actionDelimiter,
+  ImageVisionTool,
   defaultAssistantFormValues,
 } from 'librechat-data-provider';
+import type { FunctionTool, TConfig, TPlugin } from 'librechat-data-provider';
 import type { AssistantForm, AssistantPanelProps } from '~/common';
-import type { FunctionTool, TPlugin, TEndpointsConfig } from 'librechat-data-provider';
 import { useCreateAssistantMutation, useUpdateAssistantMutation } from '~/data-provider';
-import { SelectDropDown, Checkbox, QuestionMark } from '~/components/ui';
 import { useAssistantsMapContext, useToastContext } from '~/Providers';
 import { useSelectAssistant, useLocalize } from '~/hooks';
 import { ToolSelectDialog } from '~/components/Tools';
+import CapabilitiesForm from './CapabilitiesForm';
+import { SelectDropDown } from '~/components/ui';
 import AssistantAvatar from './AssistantAvatar';
 import AssistantSelect from './AssistantSelect';
 import AssistantAction from './AssistantAction';
@@ -34,17 +35,20 @@ const inputClass =
 export default function AssistantPanel({
   // index = 0,
   setAction,
+  endpoint,
   actions = [],
   setActivePanel,
   assistant_id: current_assistant_id,
   setCurrentAssistantId,
-}: AssistantPanelProps) {
+  assistantsConfig,
+  version,
+}: AssistantPanelProps & { assistantsConfig?: TConfig | null }) {
   const queryClient = useQueryClient();
   const modelsQuery = useGetModelsQuery();
   const assistantMap = useAssistantsMapContext();
-  const { data: endpointsConfig = {} as TEndpointsConfig } = useGetEndpointsQuery();
+
   const allTools = queryClient.getQueryData<TPlugin[]>([QueryKeys.tools]) ?? [];
-  const { onSelect: onSelectAssistant } = useSelectAssistant();
+  const { onSelect: onSelectAssistant } = useSelectAssistant(endpoint);
   const { showToast } = useToastContext();
   const localize = useLocalize();
 
@@ -54,40 +58,31 @@ export default function AssistantPanel({
 
   const [showToolDialog, setShowToolDialog] = useState(false);
 
-  const { control, handleSubmit, reset, setValue, getValues } = methods;
+  const { control, handleSubmit, reset } = methods;
   const assistant = useWatch({ control, name: 'assistant' });
   const functions = useWatch({ control, name: 'functions' });
   const assistant_id = useWatch({ control, name: 'id' });
-  const model = useWatch({ control, name: 'model' });
 
   const activeModel = useMemo(() => {
-    return assistantMap?.[assistant_id]?.model;
-  }, [assistantMap, assistant_id]);
+    return assistantMap?.[endpoint]?.[assistant_id]?.model;
+  }, [assistantMap, endpoint, assistant_id]);
 
-  const assistants = useMemo(() => endpointsConfig?.[EModelEndpoint.assistants], [endpointsConfig]);
-  const retrievalModels = useMemo(() => new Set(assistants?.retrievalModels ?? []), [assistants]);
   const toolsEnabled = useMemo(
-    () => assistants?.capabilities?.includes(Capabilities.tools),
-    [assistants],
+    () => assistantsConfig?.capabilities?.includes(Capabilities.tools),
+    [assistantsConfig],
   );
   const actionsEnabled = useMemo(
-    () => assistants?.capabilities?.includes(Capabilities.actions),
-    [assistants],
+    () => assistantsConfig?.capabilities?.includes(Capabilities.actions),
+    [assistantsConfig],
   );
   const retrievalEnabled = useMemo(
-    () => assistants?.capabilities?.includes(Capabilities.retrieval),
-    [assistants],
+    () => assistantsConfig?.capabilities?.includes(Capabilities.retrieval),
+    [assistantsConfig],
   );
   const codeEnabled = useMemo(
-    () => assistants?.capabilities?.includes(Capabilities.code_interpreter),
-    [assistants],
+    () => assistantsConfig?.capabilities?.includes(Capabilities.code_interpreter),
+    [assistantsConfig],
   );
-
-  useEffect(() => {
-    if (model && !retrievalModels.has(model)) {
-      setValue(Capabilities.retrieval, false);
-    }
-  }, [model, setValue, retrievalModels]);
 
   /* Mutations */
   const update = useUpdateAssistantMutation({
@@ -140,7 +135,7 @@ export default function AssistantPanel({
       if (!functionName.includes(actionDelimiter)) {
         return functionName;
       } else {
-        const assistant = assistantMap?.[assistant_id];
+        const assistant = assistantMap?.[endpoint]?.[assistant_id];
         const tool = assistant?.tools?.find((tool) => tool.function?.name === functionName);
         if (assistant && tool) {
           return tool;
@@ -155,7 +150,10 @@ export default function AssistantPanel({
       tools.push({ type: Tools.code_interpreter });
     }
     if (data.retrieval) {
-      tools.push({ type: Tools.retrieval });
+      tools.push({ type: version == 2 ? Tools.file_search : Tools.retrieval });
+    }
+    if (data.image_vision) {
+      tools.push(ImageVisionTool);
     }
 
     const {
@@ -175,6 +173,7 @@ export default function AssistantPanel({
           instructions,
           model,
           tools,
+          endpoint,
         },
       });
       return;
@@ -186,6 +185,8 @@ export default function AssistantPanel({
       instructions,
       model,
       tools,
+      endpoint,
+      version,
     });
   };
 
@@ -203,6 +204,7 @@ export default function AssistantPanel({
               <AssistantSelect
                 reset={reset}
                 value={field.value}
+                endpoint={endpoint}
                 setCurrentAssistantId={setCurrentAssistantId}
                 selectedAssistant={current_assistant_id ?? null}
                 createMutation={create}
@@ -231,6 +233,8 @@ export default function AssistantPanel({
               createMutation={create}
               assistant_id={assistant_id ?? null}
               metadata={assistant?.['metadata'] ?? null}
+              endpoint={endpoint}
+              version={version}
             />
             <label className={labelClass} htmlFor="name">
               {localize('com_ui_name')}
@@ -309,106 +313,43 @@ export default function AssistantPanel({
             <Controller
               name="model"
               control={control}
-              render={({ field }) => (
-                <SelectDropDown
-                  emptyTitle={true}
-                  value={field.value}
-                  setValue={field.onChange}
-                  availableValues={modelsQuery.data?.[EModelEndpoint.assistants] ?? []}
-                  showAbove={false}
-                  showLabel={false}
-                  className={cn(
-                    cardStyle,
-                    'flex h-[40px] w-full flex-none items-center justify-center px-4 hover:cursor-pointer',
+              rules={{ required: true, minLength: 1 }}
+              render={({ field, fieldState: { error } }) => (
+                <>
+                  <SelectDropDown
+                    emptyTitle={true}
+                    value={field.value}
+                    setValue={field.onChange}
+                    availableValues={modelsQuery.data?.[endpoint] ?? []}
+                    showAbove={false}
+                    showLabel={false}
+                    className={cn(
+                      cardStyle,
+                      'flex h-[40px] w-full flex-none items-center justify-center px-4 hover:cursor-pointer',
+                    )}
+                    containerClassName={cn('rounded-md', error ? 'border-red-500 border-2' : '')}
+                  />
+                  {error && (
+                    <span className="text-sm text-red-500 transition duration-300 ease-in-out">
+                      {localize('com_ui_field_required')}
+                    </span>
                   )}
-                />
+                </>
               )}
             />
           </div>
           {/* Knowledge */}
-          {(codeEnabled || retrievalEnabled) && (
-            <Knowledge assistant_id={assistant_id} files={files} />
+          {(codeEnabled || retrievalEnabled) && version == 1 && (
+            <Knowledge assistant_id={assistant_id} files={files} endpoint={endpoint} />
           )}
           {/* Capabilities */}
-          <div className="mb-6">
-            <div className="mb-1.5 flex items-center">
-              <span>
-                <label className="text-token-text-primary block font-medium">
-                  {localize('com_assistants_capabilities')}
-                </label>
-              </span>
-            </div>
-            <div className="flex flex-col items-start gap-2">
-              {codeEnabled && (
-                <div className="flex items-center">
-                  <Controller
-                    name={Capabilities.code_interpreter}
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        {...field}
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="relative float-left  mr-2 inline-flex h-4 w-4 cursor-pointer"
-                        value={field?.value?.toString()}
-                      />
-                    )}
-                  />
-                  <label
-                    className="form-check-label text-token-text-primary w-full cursor-pointer"
-                    htmlFor={Capabilities.code_interpreter}
-                    onClick={() =>
-                      setValue(
-                        Capabilities.code_interpreter,
-                        !getValues(Capabilities.code_interpreter),
-                        {
-                          shouldDirty: true,
-                        },
-                      )
-                    }
-                  >
-                    <div className="flex items-center">
-                      {localize('com_assistants_code_interpreter')}
-                      <QuestionMark />
-                    </div>
-                  </label>
-                </div>
-              )}
-              {retrievalEnabled && (
-                <div className="flex items-center">
-                  <Controller
-                    name={Capabilities.retrieval}
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        {...field}
-                        checked={field.value}
-                        disabled={!retrievalModels.has(model)}
-                        onCheckedChange={field.onChange}
-                        className="relative float-left  mr-2 inline-flex h-4 w-4 cursor-pointer"
-                        value={field?.value?.toString()}
-                      />
-                    )}
-                  />
-                  <label
-                    className={cn(
-                      'form-check-label text-token-text-primary w-full',
-                      !retrievalModels.has(model) ? 'cursor-no-drop opacity-50' : 'cursor-pointer',
-                    )}
-                    htmlFor={Capabilities.retrieval}
-                    onClick={() =>
-                      retrievalModels.has(model) &&
-                      setValue(Capabilities.retrieval, !getValues(Capabilities.retrieval), {
-                        shouldDirty: true,
-                      })
-                    }
-                  >
-                    {localize('com_assistants_retrieval')}
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
+          <CapabilitiesForm
+            version={version}
+            endpoint={endpoint}
+            codeEnabled={codeEnabled}
+            assistantsConfig={assistantsConfig}
+            retrievalEnabled={retrievalEnabled}
+          />
           {/* Tools */}
           <div className="mb-6">
             <label className={labelClass}>
@@ -417,9 +358,9 @@ export default function AssistantPanel({
               ${actionsEnabled ? localize('com_assistants_actions') : ''}`}
             </label>
             <div className="space-y-1">
-              {functions.map((func) => (
+              {functions.map((func, i) => (
                 <AssistantTool
-                  key={func}
+                  key={`${func}-${i}-${assistant_id}`}
                   tool={func}
                   allTools={allTools}
                   assistant_id={assistant_id}
@@ -472,6 +413,7 @@ export default function AssistantPanel({
               activeModel={activeModel}
               setCurrentAssistantId={setCurrentAssistantId}
               createMutation={create}
+              endpoint={endpoint}
             />
             {/* Secondary Select Button */}
             {assistant_id && (
@@ -506,6 +448,7 @@ export default function AssistantPanel({
           isOpen={showToolDialog}
           setIsOpen={setShowToolDialog}
           assistant_id={assistant_id}
+          endpoint={endpoint}
         />
       </form>
     </FormProvider>
