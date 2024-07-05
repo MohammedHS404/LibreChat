@@ -10,7 +10,7 @@
 
 - just create a folder called uploads
 
-# You will need to add an .env file with your credentials
+# You will need to add an .env file with your credentials at the top level directory
 
 - Create .env file
 - Pase the following
