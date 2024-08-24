@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { useRegisterUserMutation } from 'librechat-data-provider/react-query';
 import type { TRegisterUser, TError } from 'librechat-data-provider';
 import type { TLoginLayoutContext } from '~/common';
 import { ErrorMessage } from './ErrorMessage';
+import { Spinner } from '~/components/svg';
 import { useLocalize } from '~/hooks';
 
 const Registration: React.FC = () => {
@@ -13,34 +14,47 @@ const Registration: React.FC = () => {
   const { startupConfig, startupConfigError, isFetching } = useOutletContext<TLoginLayoutContext>();
 
   const {
-    register,
     watch,
+    register,
     handleSubmit,
     formState: { errors },
   } = useForm<TRegisterUser>({ mode: 'onChange' });
-
-  const [error, setError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const registerUser = useRegisterUserMutation();
   const password = watch('password');
 
-  const onRegisterUserFormSubmit = async (data: TRegisterUser) => {
-    try {
-      await registerUser.mutateAsync(data);
-      navigate('/c/new');
-    } catch (error) {
-      setError(true);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [countdown, setCountdown] = useState<number>(3);
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const token = queryParams.get('token');
+
+  const registerUser = useRegisterUserMutation({
+    onMutate: () => {
+      setIsSubmitting(true);
+    },
+    onSuccess: () => {
+      setIsSubmitting(false);
+      setCountdown(3);
+      const timer = setInterval(() => {
+        setCountdown((prevCountdown) => {
+          if (prevCountdown <= 1) {
+            clearInterval(timer);
+            navigate('/c/new', { replace: true });
+            return 0;
+          } else {
+            return prevCountdown - 1;
+          }
+        });
+      }, 1000);
+    },
+    onError: (error: unknown) => {
+      setIsSubmitting(false);
       if ((error as TError).response?.data?.message) {
         setErrorMessage((error as TError).response?.data?.message ?? '');
       }
-    }
-  };
-
-  useEffect(() => {
-    if (startupConfig?.registrationEnabled === false) {
-      navigate('/login');
-    }
-  }, [startupConfig, navigate]);
+    },
+  });
 
   const renderInput = (id: string, label: string, type: string, validation: object) => (
     <div className="mb-2">
@@ -76,19 +90,34 @@ const Registration: React.FC = () => {
 
   return (
     <>
-      {error && (
+      {errorMessage && (
         <ErrorMessage>
           {localize('com_auth_error_create')} {errorMessage}
         </ErrorMessage>
       )}
-
+      {registerUser.isSuccess && countdown > 0 && (
+        <div
+          className="rounded-md border border-green-500 bg-green-500/10 px-3 py-2 text-sm text-gray-600 dark:text-gray-200"
+          role="alert"
+        >
+          {localize(
+            startupConfig?.emailEnabled
+              ? 'com_auth_registration_success_generic'
+              : 'com_auth_registration_success_insecure',
+          ) +
+            ' ' +
+            localize('com_auth_email_verification_redirecting', countdown.toString())}
+        </div>
+      )}
       {!startupConfigError && !isFetching && (
         <>
           <form
             className="mt-6"
             aria-label="Registration form"
             method="POST"
-            onSubmit={handleSubmit(onRegisterUserFormSubmit)}
+            onSubmit={handleSubmit((data: TRegisterUser) =>
+              registerUser.mutate({ ...data, token: token ?? undefined }),
+            )}
           >
             {renderInput('name', 'com_auth_full_name', 'text', {
               required: localize('com_auth_name_required'),
@@ -148,7 +177,7 @@ const Registration: React.FC = () => {
                 aria-label="Submit registration"
                 className="w-full transform rounded-md bg-green-500 px-4 py-3 tracking-wide text-white transition-colors duration-200 hover:bg-green-550 focus:bg-green-550 focus:outline-none disabled:cursor-not-allowed disabled:hover:bg-green-500"
               >
-                {localize('com_auth_continue')}
+                {isSubmitting ? <Spinner /> : localize('com_auth_continue')}
               </button>
             </div>
           </form>

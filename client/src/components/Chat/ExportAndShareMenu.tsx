@@ -1,63 +1,97 @@
 import { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Share2 } from 'lucide-react';
 import { useRecoilValue } from 'recoil';
-import { useLocation } from 'react-router-dom';
-import type { TConversation } from 'librechat-data-provider';
-import DropDownMenu from '../Conversations/DropDownMenu';
-import ShareButton from '../Conversations/ShareButton';
-import HoverToggle from '../Conversations/HoverToggle';
-import ExportButton from './ExportButton';
+import { ShareButton } from '~/components/Conversations/ConvoOptions';
+import { Button, DropdownPopup } from '~/components/ui';
+import { useMediaQuery, useLocalize } from '~/hooks';
+import { ExportModal } from '../Nav';
 import store from '~/store';
 
-export default function ExportAndShareMenu() {
-  const location = useLocation();
-
-  const activeConvo = useRecoilValue(store.conversationByIndex(0));
-  const globalConvo = useRecoilValue(store.conversation) ?? ({} as TConversation);
+export default function ExportAndShareMenu({
+  isSharedButtonEnabled,
+}: {
+  isSharedButtonEnabled: boolean;
+}) {
+  const localize = useLocalize();
+  const conversation = useRecoilValue(store.conversationByIndex(0));
   const [isPopoverActive, setIsPopoverActive] = useState(false);
-  let conversation: TConversation | null | undefined;
-  if (location.state?.from?.pathname.includes('/chat')) {
-    conversation = globalConvo;
-  } else {
-    conversation = activeConvo;
-  }
+  const [showExports, setShowExports] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const isSmallScreen = useMediaQuery('(max-width: 768px)');
 
   const exportable =
     conversation &&
-    conversation.conversationId &&
+    conversation.conversationId != null &&
     conversation.conversationId !== 'new' &&
     conversation.conversationId !== 'search';
 
-  if (!exportable) {
-    return <></>;
+  if (exportable === false) {
+    return null;
   }
 
-  const isActiveConvo = exportable;
+  const onOpenChange = (value: boolean) => {
+    setShowExports(value);
+  };
+
+  const shareHandler = () => {
+    setIsPopoverActive(false);
+    setShowShareDialog(true);
+  };
+
+  const exportHandler = () => {
+    setIsPopoverActive(false);
+    setShowExports(true);
+  };
+
+  const dropdownItems = [
+    {
+      label: localize('com_endpoint_export'),
+      onClick: exportHandler,
+      icon: <Upload className="icon-md mr-2 dark:text-gray-300" />,
+    },
+    {
+      label: localize('com_ui_share'),
+      onClick: shareHandler,
+      icon: <Share2 className="icon-md mr-2 dark:text-gray-300" />,
+      show: isSharedButtonEnabled,
+    },
+  ];
 
   return (
-    <HoverToggle
-      isActiveConvo={!!isActiveConvo}
-      isPopoverActive={isPopoverActive}
-      setIsPopoverActive={setIsPopoverActive}
-    >
-      <DropDownMenu
-        icon={<Upload />}
-        tooltip="Export/Share"
-        className="pointer-cursor relative z-50 flex h-[40px] min-w-4 flex-none flex-col items-center justify-center rounded-md border border-gray-100 bg-white px-3 text-left hover:bg-gray-50 focus:outline-none focus:ring-0 focus:ring-offset-0 radix-state-open:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:radix-state-open:bg-gray-700 sm:text-sm"
-      >
-        {conversation && conversation.conversationId && (
-          <>
-            <ExportButton conversation={conversation} setPopoverActive={setIsPopoverActive} />
-            <ShareButton
-              conversationId={conversation.conversationId}
-              title={conversation.title ?? ''}
-              appendLabel={true}
-              className="mb-[3.5px]"
-              setPopoverActive={setIsPopoverActive}
-            />
-          </>
-        )}
-      </DropDownMenu>
-    </HoverToggle>
+    <>
+      <DropdownPopup
+        isOpen={isPopoverActive}
+        setIsOpen={setIsPopoverActive}
+        trigger={
+          <Button
+            id="export-menu-button"
+            aria-label="Export options"
+            variant="outline"
+            className="mr-4 h-10 w-10 p-0 transition-all duration-300 ease-in-out"
+          >
+            <Upload className="icon-md dark:text-gray-300" aria-hidden="true" focusable="false" />
+          </Button>
+        }
+        items={dropdownItems}
+        anchor="bottom end"
+        className={isSmallScreen ? '' : 'absolute right-0 top-0 mt-2'}
+      />
+      {showShareDialog && conversation.conversationId != null && (
+        <ShareButton
+          conversationId={conversation.conversationId}
+          title={conversation.title ?? ''}
+          showShareDialog={showShareDialog}
+          setShowShareDialog={setShowShareDialog}
+        />
+      )}
+      {showExports && (
+        <ExportModal
+          open={showExports}
+          onOpenChange={onOpenChange}
+          conversation={conversation}
+          aria-label="Export conversation modal"
+        />
+      )}
+    </>
   );
 }
