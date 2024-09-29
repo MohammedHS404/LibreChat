@@ -22,3 +22,4 @@ services:
       - ./images:/app/client/public/images
       - ./logs:/app/api/logs
       - ./uploads:/app/uploads
+      - ./librechat.yaml:/app/librechat.yaml
